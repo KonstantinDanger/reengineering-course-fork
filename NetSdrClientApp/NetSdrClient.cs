@@ -157,7 +157,7 @@ namespace NetSdrClientApp
             if (responseTaskSource != null)
             {
                 responseTaskSource.SetResult(e);
-                responseTaskSource = null;
+                responseTaskSource = new TaskCompletionSource<byte[]>();
             }
             Console.WriteLine("Response recieved: " + e.Select(b => Convert.ToString(b, toBase: 16)).Aggregate((l, r) => $"{l} {r}"));
         }
