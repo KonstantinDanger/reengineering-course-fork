@@ -182,4 +182,59 @@ public class NetSdrClientTests
         Assert.That(_client.IQStarted, Is.False);
         _updMock.Verify(udp => udp.StopListening(), Times.Once);
     }
+
+    [Test]
+    public async Task ChangeFrequencyNoConnectionTest()
+    {
+        //act
+        await _client.ChangeFrequencyAsync(100_000_000L, channel: 1);
+
+        //assert
+        _tcpMock.Verify(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>()), Times.Never);
+    }
+
+    [Test]
+    public async Task ConnectAsyncAlreadyConnectedTest()
+    {
+        //arrange
+        await _client.ConnectAsync();
+        _tcpMock.Invocations.Clear();
+
+        //act 
+        await _client.ConnectAsync();
+
+        //assert
+        _tcpMock.Verify(tcp => tcp.Connect(), Times.Never);
+        _tcpMock.Verify(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>()), Times.Never);
+    }
+
+    [Test]
+    public async Task StartThenStopIQTogglesIQStartedTest()
+    {
+        //arrange
+        await _client.ConnectAsync();
+
+        //act
+        await _client.StartIQAsync();
+        Assert.That(_client.IQStarted, Is.True);
+
+        await _client.StopIQAsync();
+        Assert.That(_client.IQStarted, Is.False);
+    }
+
+    [Test]
+    public async Task StartIQTwiceDoesNotStartListeningTwiceTest()
+    {
+        //arrange
+        await _client.ConnectAsync();
+        await _client.StartIQAsync();
+        _updMock.Invocations.Clear();
+
+        //act
+        await _client.StartIQAsync();
+
+        //assert
+        Assert.That(_client.IQStarted, Is.True);
+        _updMock.Verify(udp => udp.StartListeningAsync(), Times.Once);
+    }
 }
