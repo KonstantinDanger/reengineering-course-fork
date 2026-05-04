@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
@@ -59,6 +60,7 @@ public class UdpClientWrapper : IUdpClient
         }
     }
 
+    [ExcludeFromCodeCoverage]
     public void Exit() => StopListening();
 
     public override int GetHashCode()
