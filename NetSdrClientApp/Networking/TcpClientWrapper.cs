@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -84,6 +85,7 @@ namespace NetSdrClientApp.Networking
             }
         }
 
+        [ExcludeFromCodeCoverage]
         public async Task SendMessageAsync(string str)
         {
             byte[] data = Encoding.UTF8.GetBytes(str);
@@ -129,5 +131,4 @@ namespace NetSdrClientApp.Networking
             }
         }
     }
-
 }
