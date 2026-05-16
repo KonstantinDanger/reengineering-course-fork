@@ -6,8 +6,6 @@ namespace NetSdrClientApp.Networking
 {
     public class TcpClientWrapper : ITcpClient
     {
-        //private ITcpClient _client = NetSdrMessageHelper.Client;
-
         private string _host;
         private int _port;
         private TcpClient? _tcpClient;
