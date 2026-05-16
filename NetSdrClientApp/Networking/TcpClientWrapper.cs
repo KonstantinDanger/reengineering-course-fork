@@ -1,5 +1,4 @@
-﻿using NetSdrClientApp.Messages;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
 using System.Text;
 
@@ -7,7 +6,7 @@ namespace NetSdrClientApp.Networking
 {
     public class TcpClientWrapper : ITcpClient
     {
-        private ITcpClient _client = NetSdrMessageHelper.Client;
+        //private ITcpClient _client = NetSdrMessageHelper.Client;
 
         private string _host;
         private int _port;

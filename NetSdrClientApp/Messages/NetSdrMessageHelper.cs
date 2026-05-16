@@ -1,11 +1,9 @@
-﻿using NetSdrClientApp.Networking;
-
-namespace NetSdrClientApp.Messages
+﻿namespace NetSdrClientApp.Messages
 {
     //TODO: analyze possible use of [StructLayout] for better performance and readability 
     public static class NetSdrMessageHelper
     {
-        public static readonly ITcpClient Client = new TcpClientWrapper("http://localhost/", 3000);
+        //public static readonly ITcpClient Client = new TcpClientWrapper("http://localhost/", 3000);
         private const short _maxMessageLength = 8191;
         private const short _maxDataItemMessageLength = 8194;
         private const short _msgHeaderLength = 2; //2 byte, 16 bit
