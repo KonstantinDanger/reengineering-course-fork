@@ -1,13 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.PortableExecutable;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace NetSdrClientApp.Messages
+﻿namespace NetSdrClientApp.Messages
 {
-    //TODO: analyze possible use of [StructLayout] for better performance and readability 
     public static class NetSdrMessageHelper
     {
         private const short _maxMessageLength = 8191;
@@ -38,15 +30,9 @@ namespace NetSdrClientApp.Messages
             ReceiverFrequency = 0x0020
         }
 
-        public static byte[] GetControlItemMessage(MsgTypes type, ControlItemCodes itemCode, byte[] parameters)
-        {
-            return GetMessage(type, itemCode, parameters);
-        }
+        public static byte[] GetControlItemMessage(MsgTypes type, ControlItemCodes itemCode, byte[] parameters) => GetMessage(type, itemCode, parameters);
 
-        public static byte[] GetDataItemMessage(MsgTypes type, byte[] parameters)
-        {
-            return GetMessage(type, ControlItemCodes.None, parameters);
-        }
+        public static byte[] GetDataItemMessage(MsgTypes type, byte[] parameters) => GetMessage(type, ControlItemCodes.None, parameters);
 
         private static byte[] GetMessage(MsgTypes type, ControlItemCodes itemCode, byte[] parameters)
         {
@@ -109,7 +95,7 @@ namespace NetSdrClientApp.Messages
         public static IEnumerable<int> GetSamples(ushort sampleSize, byte[] body)
         {
             sampleSize /= 8; //to bytes
-            if (sampleSize  > 4)
+            if (sampleSize > 4)
             {
                 throw new ArgumentOutOfRangeException(sampleSize.ToString(), "sample size was bigger then 4");
             }
