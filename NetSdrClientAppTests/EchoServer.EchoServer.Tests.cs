@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using Program = EchoServer.Program;
@@ -127,5 +128,54 @@ public class EchoServerTests
         }
 
         server.Stop();
+    }
+
+    [Test]
+    public async Task HandleClientAsync_EchoesMessage_ClosesClient()
+    {
+        // Arrange
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+
+        int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+
+        using var client = new TcpClient();
+
+        Task<TcpClient> acceptTask = listener.AcceptTcpClientAsync();
+
+        await client.ConnectAsync(IPAddress.Loopback, port);
+
+        TcpClient serverClient = await acceptTask;
+
+        using var cts = new CancellationTokenSource();
+
+        // Start HandleClientAsync in background
+        Task handlerTask = Program.HandleClientAsync(serverClient, cts.Token);
+
+        using NetworkStream clientStream = client.GetStream();
+
+        byte[] message = Encoding.UTF8.GetBytes("ping");
+        byte[] buffer = new byte[1024];
+
+        // Act
+        await clientStream.WriteAsync(message, 0, message.Length);
+
+        int bytesRead = await clientStream.ReadAsync(buffer, 0, buffer.Length);
+
+        string response = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+
+        // Assert
+        Assert.That(response, Is.EqualTo("ping"));
+
+        // Close client stream to end server read loop
+        client.Close();
+
+        // Wait for handler to finish
+        await handlerTask;
+
+        Assert.That(serverClient.Connected, Is.False);
+
+        // Cleanup
+        listener.Stop();
     }
 }

@@ -74,7 +74,7 @@ namespace EchoServer
             Console.WriteLine("Server shutdown.");
         }
 
-        private static async Task HandleClientAsync(TcpClient client, CancellationToken token)
+        public static async Task HandleClientAsync(TcpClient client, CancellationToken token)
         {
             using NetworkStream stream = client.GetStream();
 
