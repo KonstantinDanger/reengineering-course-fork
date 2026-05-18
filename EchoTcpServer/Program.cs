@@ -7,14 +7,14 @@ namespace EchoServer
     /// This program was designed for test purposes only
     /// Not for a review
     /// </summary>
-    public class EchoServer
+    public class Program
     {
         private TcpListener? _listener;
 
         private readonly int _port;
         private readonly CancellationTokenSource _cancellationTokenSource;
 
-        public EchoServer(int port)
+        public Program(int port)
         {
             _port = port;
             _cancellationTokenSource = new CancellationTokenSource();
@@ -22,7 +22,7 @@ namespace EchoServer
 
         public static async Task Main(string[] args)
         {
-            EchoServer server = new EchoServer(5000);
+            Program server = new Program(5000);
 
             // Start the server in a separate task
             await Task.Run(server.StartAsync);
@@ -48,7 +48,6 @@ namespace EchoServer
             Console.WriteLine("Sender stopped.");
 
         }
-
 
         public async Task StartAsync()
         {
