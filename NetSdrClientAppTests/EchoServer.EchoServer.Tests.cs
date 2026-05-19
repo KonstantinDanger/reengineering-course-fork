@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Text;
 using Program = EchoServer.Program;
 
@@ -54,7 +55,7 @@ public class EchoServerTests
         // Act
         await stream.WriteAsync(message, 0, message.Length);
 
-        int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+        int bytesRead = await stream.ReadAsync(buffer);
 
         string response = Encoding.UTF8.GetString(buffer, 0, bytesRead);
 
@@ -114,7 +115,7 @@ public class EchoServerTests
 
                 byte[] buffer = new byte[1024];
 
-                int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                int bytesRead = await stream.ReadAsync(buffer);
 
                 return Encoding.UTF8.GetString(buffer, 0, bytesRead);
             });
@@ -160,7 +161,7 @@ public class EchoServerTests
         // Act
         await clientStream.WriteAsync(message, 0, message.Length);
 
-        int bytesRead = await clientStream.ReadAsync(buffer, 0, buffer.Length);
+        int bytesRead = await clientStream.ReadAsync(buffer);
 
         string response = Encoding.UTF8.GetString(buffer, 0, bytesRead);
 
@@ -178,4 +179,70 @@ public class EchoServerTests
         // Cleanup
         listener.Stop();
     }
+
+    [Test]
+    public void Main_Method_Exists_And_IsAsync()
+    {
+        // Arrange
+        MethodInfo? method = typeof(Program).GetMethod(
+            "Main",
+            BindingFlags.Public | BindingFlags.Static);
+
+        // Assert
+        Assert.That(method, Is.Not.Null);
+
+        Assert.That(
+            method!.ReturnType,
+            Is.EqualTo(typeof(Task)));
+    }
+
+    [Test]
+    public async Task StartAsync_StopsWhenListenerDisposed()
+    {
+        // Arrange
+        var server = new Program(5056);
+
+        Task serverTask = Task.Run(server.StartAsync);
+
+        await Task.Delay(TaskDelay);
+
+        // Act
+        server.Stop();
+
+        // Assert
+        await serverTask;
+
+        Assert.That(serverTask.IsCompletedSuccessfully, Is.True);
+    }
+
+    [Test]
+    public async Task HandleClientAsync_HandlesCancellation()
+    {
+        // Arrange
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+
+        int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+
+        using var client = new TcpClient();
+
+        Task<TcpClient> acceptTask = listener.AcceptTcpClientAsync();
+
+        await client.ConnectAsync(IPAddress.Loopback, port);
+
+        TcpClient serverClient = await acceptTask;
+
+        using var cts = new CancellationTokenSource();
+
+        Task handlerTask = Program.HandleClientAsync(serverClient, cts.Token);
+
+        // Act
+        cts.Cancel();
+
+        // Assert
+        Assert.DoesNotThrowAsync(async () => await handlerTask);
+
+        listener.Stop();
+    }
+
 }

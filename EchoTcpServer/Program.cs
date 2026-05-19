@@ -55,19 +55,28 @@ namespace EchoServer
             _listener.Start();
             Console.WriteLine($"Server started on port {_port}.");
 
-            while (!_cancellationTokenSource.Token.IsCancellationRequested)
+            CancellationToken token = _cancellationTokenSource.Token;
+
+            while (!token.IsCancellationRequested)
             {
                 try
                 {
-                    TcpClient client = await _listener.AcceptTcpClientAsync();
+                    TcpClient client = await _listener.AcceptTcpClientAsync(token);
                     Console.WriteLine("Client connected.");
 
-                    _ = Task.Run(() => HandleClientAsync(client, _cancellationTokenSource.Token));
+                    _ = Task.Run(() => HandleClientAsync(client, token));
                 }
-                catch (ObjectDisposedException)
+                catch (Exception ex) when (
+                    ex is ObjectDisposedException ||
+                    ex is SocketException ||
+                    ex is OperationCanceledException)
                 {
-                    // Listener has been closed
-                    break;
+                    if (token.IsCancellationRequested)
+                    {
+                        break;
+                    }
+
+                    throw;
                 }
             }
 
@@ -84,14 +93,18 @@ namespace EchoServer
                 byte[] buffer = new byte[bufferSize];
                 int bytesRead;
 
-                while (!token.IsCancellationRequested && (bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, token)) > 0)
+                while (!token.IsCancellationRequested && (bytesRead = await stream.ReadAsync(buffer, token)) > 0)
                 {
                     // Echo back the received message
-                    await stream.WriteAsync(buffer, 0, bytesRead, token);
+                    await stream.WriteAsync(buffer.AsMemory(0, bytesRead), token);
                     Console.WriteLine($"Echoed {bytesRead} bytes to the client.");
                 }
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (OperationCanceledException ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+            catch (Exception ex)
             {
                 Console.WriteLine($"Error: {ex.Message}");
             }
