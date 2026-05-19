@@ -245,4 +245,45 @@ public class EchoServerTests
         listener.Stop();
     }
 
+    [Test]
+    public async Task RunAsync_StartsServerAndAcceptsConnection_BeforeCancellation()
+    {
+        // Arrange
+        using var cts = new CancellationTokenSource();
+
+        Task runTask = Program.RunAsync(cts.Token);
+
+        await Task.Delay(TaskDelay);
+
+        // Act
+        using var client = new TcpClient();
+
+        Assert.DoesNotThrowAsync(async () =>
+            await client.ConnectAsync("127.0.0.1", 5000));
+
+        cts.Cancel();
+        await runTask;
+
+        // Assert
+        Assert.That(runTask.IsCompletedSuccessfully, Is.True);
+    }
+
+    [Test]
+    public async Task RunAsync_CompletesCleanly_WhenCancelledAfterDelay()
+    {
+        // Arrange
+        using var cts = new CancellationTokenSource();
+
+        Task runTask = Program.RunAsync(cts.Token);
+
+        await Task.Delay(TaskDelay);
+
+        // Act
+        cts.Cancel();
+        await runTask;
+
+        // Assert
+        Assert.That(runTask.IsCompletedSuccessfully, Is.True);
+        Assert.That(runTask.IsFaulted, Is.False);
+    }
 }

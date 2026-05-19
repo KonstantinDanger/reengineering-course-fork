@@ -22,14 +22,27 @@ namespace EchoServer
 
         public static async Task Main(string[] args)
         {
-            Program server = new Program(5000);
+            using var cts = new CancellationTokenSource();
 
-            // Start the server in a separate task
-            await Task.Run(server.StartAsync);
+            // Cancel on Ctrl+C or 'q'
+            Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
+            Task keyTask = Task.Run(() =>
+            {
+                while (Console.ReadKey(intercept: true).Key != ConsoleKey.Q) { }
+                cts.Cancel();
+            });
 
-            string host = "127.0.0.1"; // Target IP
-            int port = 60000;          // Target Port
-            int intervalMilliseconds = 5000; // Send every 3 seconds
+            await RunAsync(cts.Token);
+        }
+
+        public static async Task RunAsync(CancellationToken cancellationToken)
+        {
+            var server = new Program(5000);
+            _ = Task.Run(server.StartAsync, cancellationToken);
+
+            string host = "127.0.0.1";
+            int port = 60000;
+            int intervalMilliseconds = 5000;
 
             using var sender = new UdpTimedSender(host, port);
 
@@ -38,15 +51,19 @@ namespace EchoServer
 
             Console.WriteLine("Press 'q' to quit...");
 
-            while (Console.ReadKey(intercept: true).Key != ConsoleKey.Q)
+            try
             {
-                // Just wait until 'q' is pressed
+                await Task.Delay(Timeout.Infinite, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected — triggered by Stop()
             }
 
             sender.StopSending();
             server.Stop();
-            Console.WriteLine("Sender stopped.");
 
+            Console.WriteLine("Sender stopped.");
         }
 
         public async Task StartAsync()
