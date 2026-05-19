@@ -287,18 +287,30 @@ public class EchoServerTests
         Assert.That(runTask.IsFaulted, Is.False);
     }
 
+
     [Test]
-    public void RunAsync_WhenCancellationRequested_DoesNotThrowOperationCanceledException()
+    public async Task StartAsync_RethrowsException_WhenListenerFailsWithoutCancellation()
     {
         // Arrange
-        using var cts = new CancellationTokenSource();
+        var server = new Program(TestPort);
+        Task serverTask = server.StartAsync();
 
-        cts.CancelAfter(100);
+        await Task.Delay(TaskDelay);
 
-        // Act + Assert
-        Assert.DoesNotThrowAsync(async () =>
-        {
-            await Program.RunAsync(cts.Token);
-        });
+        var listenerField = typeof(Program)
+            .GetField("_listener", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        var listener = (TcpListener)listenerField!.GetValue(server)!;
+
+        // Act
+        listener.Stop();
+
+        // Assert 
+        var exception = Assert.CatchAsync<Exception>(async () => await serverTask);
+
+        Assert.That(exception,
+            Is.InstanceOf<SocketException>()
+            .Or.InstanceOf<ObjectDisposedException>()
+            .Or.InstanceOf<OperationCanceledException>());
     }
 }
