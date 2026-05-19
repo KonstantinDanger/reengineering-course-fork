@@ -286,4 +286,19 @@ public class EchoServerTests
         Assert.That(runTask.IsCompletedSuccessfully, Is.True);
         Assert.That(runTask.IsFaulted, Is.False);
     }
+
+    [Test]
+    public void RunAsync_WhenCancellationRequested_DoesNotThrowOperationCanceledException()
+    {
+        // Arrange
+        using var cts = new CancellationTokenSource();
+
+        cts.CancelAfter(100);
+
+        // Act + Assert
+        Assert.DoesNotThrowAsync(async () =>
+        {
+            await Program.RunAsync(cts.Token);
+        });
+    }
 }

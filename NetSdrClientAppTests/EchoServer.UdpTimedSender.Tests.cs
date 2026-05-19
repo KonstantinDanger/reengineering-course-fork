@@ -6,20 +6,28 @@ namespace NetSdrClientAppTests;
 public class UdpTimedSenderTests
 {
     private const string TestHost = "127.0.0.1";
-    private const int TestPort = 60001;
+
     private UdpClient _receiver;
 
+    private int _port;
+
     [SetUp]
-    public void SetUp() => _receiver = new UdpClient(TestPort);
+    public void SetUp()
+    {
+        _receiver = new UdpClient(0);
+
+        System.Net.IPEndPoint endpoint = (System.Net.IPEndPoint)_receiver.Client.LocalEndPoint!;
+        _port = endpoint.Port;
+    }
 
     [TearDown]
-    public void TearDown() => _receiver.Dispose();
+    public void TearDown() => _receiver?.Dispose();
 
     [Test]
     public async Task Sender_ShouldSendPacketWithCorrectHeaderAndLength()
     {
         // Arrange
-        using var sender = new UdpTimedSender(TestHost, TestPort);
+        using var sender = new UdpTimedSender(TestHost, _port);
 
         // Act
         sender.StartSending(1000);
@@ -44,7 +52,7 @@ public class UdpTimedSenderTests
     public void StartSending_CalledTwice_ShouldThrowInvalidOperationException()
     {
         // Arrange
-        using var sender = new UdpTimedSender(TestHost, TestPort);
+        using var sender = new UdpTimedSender(TestHost, _port);
         sender.StartSending(1000);
 
         // Act
@@ -58,7 +66,7 @@ public class UdpTimedSenderTests
     public async Task StopSending_ShouldPreventFurtherMessagesFromBeingSent()
     {
         // Arrange
-        using var sender = new UdpTimedSender(TestHost, TestPort);
+        using var sender = new UdpTimedSender(TestHost, _port);
 
         // Act
         sender.StartSending(100);
