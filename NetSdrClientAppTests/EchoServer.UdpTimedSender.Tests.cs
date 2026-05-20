@@ -38,9 +38,12 @@ public class UdpTimedSenderTests
             var result = receiveTask.Result;
 
             // Assert
-            Assert.That(result.Buffer.Length, Is.EqualTo(1028));
-            Assert.That(result.Buffer[0], Is.EqualTo(0x04));
-            Assert.That(result.Buffer[1], Is.EqualTo(0x84));
+            Assert.That(result.Buffer, Has.Length.EqualTo(1028));
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Buffer[0], Is.EqualTo(0x04));
+                Assert.That(result.Buffer[1], Is.EqualTo(0x84));
+            });
         }
         else
         {

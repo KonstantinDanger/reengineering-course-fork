@@ -1,75 +1,70 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
-public class UdpClientWrapper : IUdpClient
+namespace NetSdrClientApp.Networking
 {
-    private readonly IPEndPoint _localEndPoint;
-    private CancellationTokenSource? _cts;
-    private UdpClient? _udpClient;
-
-    public event EventHandler<byte[]>? MessageReceived;
-
-    public UdpClientWrapper(int port)
+    public class UdpClientWrapper : IUdpClient
     {
-        _localEndPoint = new IPEndPoint(IPAddress.Any, port);
-    }
+        private readonly IPEndPoint _localEndPoint;
+        private CancellationTokenSource? _cts;
+        private UdpClient? _udpClient;
 
-    public async Task StartListeningAsync()
-    {
-        _cts = new CancellationTokenSource();
-        Console.WriteLine("Start listening for UDP messages...");
+        public event EventHandler<byte[]>? MessageReceived;
 
-        try
+        public UdpClientWrapper(int port) => _localEndPoint = new IPEndPoint(IPAddress.Any, port);
+
+        public async Task StartListeningAsync()
         {
-            _udpClient = new UdpClient(_localEndPoint);
-            while (!_cts.Token.IsCancellationRequested)
-            {
-                UdpReceiveResult result = await _udpClient.ReceiveAsync(_cts.Token);
-                MessageReceived?.Invoke(this, result.Buffer);
+            _cts = new CancellationTokenSource();
+            Console.WriteLine("Start listening for UDP messages...");
 
-                Console.WriteLine($"Received from {result.RemoteEndPoint}");
+            try
+            {
+                _udpClient = new UdpClient(_localEndPoint);
+                while (!_cts.Token.IsCancellationRequested)
+                {
+                    UdpReceiveResult result = await _udpClient.ReceiveAsync(_cts.Token);
+                    MessageReceived?.Invoke(this, result.Buffer);
+
+                    Console.WriteLine($"Received from {result.RemoteEndPoint}");
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                //empty
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error receiving message: {ex.Message}");
             }
         }
-        catch (OperationCanceledException ex)
+
+        public void StopListening()
         {
-            //empty
+            try
+            {
+                _cts?.Cancel();
+                _udpClient?.Close();
+                Console.WriteLine("Stopped listening for UDP messages.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error while stopping: {ex.Message}");
+            }
         }
-        catch (Exception ex)
+
+        [ExcludeFromCodeCoverage]
+        public void Exit() => StopListening();
+
+        public override int GetHashCode()
         {
-            Console.WriteLine($"Error receiving message: {ex.Message}");
+            var payload = $"{nameof(UdpClientWrapper)}|{_localEndPoint.Address}|{_localEndPoint.Port}";
+            var hash = MD5.HashData(Encoding.UTF8.GetBytes(payload));
+
+            return BitConverter.ToInt32(hash, 0);
         }
-    }
-
-    public void StopListening()
-    {
-        try
-        {
-            _cts?.Cancel();
-            _udpClient?.Close();
-            Console.WriteLine("Stopped listening for UDP messages.");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error while stopping: {ex.Message}");
-        }
-    }
-
-    [ExcludeFromCodeCoverage]
-    public void Exit() => StopListening();
-
-    public override int GetHashCode()
-    {
-        var payload = $"{nameof(UdpClientWrapper)}|{_localEndPoint.Address}|{_localEndPoint.Port}";
-
-        using var md5 = MD5.Create();
-        var hash = md5.ComputeHash(Encoding.UTF8.GetBytes(payload));
-
-        return BitConverter.ToInt32(hash, 0);
     }
 }
