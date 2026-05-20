@@ -9,7 +9,8 @@ public class AppTests
     {
         var tcp = new TcpClientWrapper("127.0.0.1", 5000);
         var udp = new UdpClientWrapper(60000);
-        return new App(tcp, udp);
+        var netSdrClient = new NetSdrClient(tcp, udp);
+        return new App(netSdrClient);
     }
 
     [Test]
@@ -32,6 +33,17 @@ public class AppTests
     {
         App app = CreateApp();
         ConsoleKey key = ConsoleKey.DownArrow;
+
+        bool result = await app.PerformCommand(app.NetSdr, key);
+
+        Assert.That(result, Is.False);
+    }
+
+    [Test]
+    public async Task PerformCommand_ReceiveQuitKey_ReturnFalse()
+    {
+        App app = CreateApp();
+        ConsoleKey key = ConsoleKey.Q;
 
         bool result = await app.PerformCommand(app.NetSdr, key);
 

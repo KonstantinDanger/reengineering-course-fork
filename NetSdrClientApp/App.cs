@@ -1,11 +1,7 @@
-﻿using NetSdrClientApp.Networking;
-
-namespace NetSdrClientApp
+﻿namespace NetSdrClientApp
 {
     public class App
     {
-        private readonly TcpClientWrapper _tcpClient;
-        private readonly UdpClientWrapper _udpClient;
         private readonly Dictionary<ConsoleKey, Func<NetSdrClient, Task>> _commands = new()
         {
             [ConsoleKey.C] = async client => await client.ConnectAsync(),
@@ -22,15 +18,10 @@ namespace NetSdrClientApp
 
         public NetSdrClient NetSdr { get; private set; }
 
-        public App(TcpClientWrapper tcpClient, UdpClientWrapper udpClient)
-        {
-            _tcpClient = tcpClient;
-            _udpClient = udpClient;
+        public App(NetSdrClient netSdrClient)
+            => NetSdr = netSdrClient;
 
-            NetSdr = new(_tcpClient, _udpClient);
-        }
-
-        public async void Start()
+        public async Task Start()
         {
             Console.WriteLine("Program has started");
 
@@ -50,7 +41,7 @@ namespace NetSdrClientApp
             if (!_commands.TryGetValue(key, out Func<NetSdrClient, Task>? command))
                 return false;
 
-            if (command == null || key == ConsoleKey.Q)
+            if (key == ConsoleKey.Q)
                 return false;
 
             await command(netSdr);
