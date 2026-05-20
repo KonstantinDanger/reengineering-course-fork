@@ -24,14 +24,6 @@ namespace EchoServer
         {
             using var cts = new CancellationTokenSource();
 
-            // Cancel on Ctrl+C or 'q'
-            Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
-            Task keyTask = Task.Run(() =>
-            {
-                while (Console.ReadKey(intercept: true).Key != ConsoleKey.Q) { }
-                cts.Cancel();
-            });
-
             await RunAsync(cts.Token);
         }
 

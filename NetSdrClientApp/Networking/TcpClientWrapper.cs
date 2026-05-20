@@ -6,11 +6,11 @@ namespace NetSdrClientApp.Networking
 {
     public class TcpClientWrapper : ITcpClient
     {
-        private string _host;
-        private int _port;
+        private readonly string _host;
+        private readonly int _port;
         private TcpClient? _tcpClient;
         private NetworkStream? _stream;
-        private CancellationTokenSource _cts;
+        private CancellationTokenSource? _cts;
 
         public bool Connected => _tcpClient != null && _tcpClient.Connected && _stream != null;
 
@@ -70,7 +70,7 @@ namespace NetSdrClientApp.Networking
             if (Connected && _stream != null && _stream.CanWrite)
             {
                 Console.WriteLine($"Message sent: " + data.Select(b => Convert.ToString(b, toBase: 16)).Aggregate((l, r) => $"{l} {r}"));
-                await _stream.WriteAsync(data, 0, data.Length);
+                await _stream.WriteAsync(data);
             }
             else
             {
@@ -92,20 +92,23 @@ namespace NetSdrClientApp.Networking
             {
                 try
                 {
-                    Console.WriteLine($"Starting listening for incomming messages.");
+                    Console.WriteLine($"Starting listening for incoming messages.");
+
+                    if (_cts == null)
+                        throw new InvalidOperationException("The operation cannot be performed because the CancellationTokenSource has not been initialized.");
 
                     while (!_cts.Token.IsCancellationRequested)
                     {
                         byte[] buffer = new byte[8194];
 
-                        int bytesRead = await _stream.ReadAsync(buffer, 0, buffer.Length, _cts.Token);
+                        int bytesRead = await _stream.ReadAsync(buffer, _cts.Token);
                         if (bytesRead > 0)
                         {
                             MessageReceived?.Invoke(this, buffer.AsSpan(0, bytesRead).ToArray());
                         }
                     }
                 }
-                catch (OperationCanceledException ex)
+                catch (OperationCanceledException)
                 {
                     //empty
                 }

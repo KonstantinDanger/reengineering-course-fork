@@ -44,12 +44,9 @@
 
             var headerBytes = GetHeader(type, itemCodeBytes.Length + parameters.Length);
 
-            List<byte> msg = new List<byte>();
-            msg.AddRange(headerBytes);
-            msg.AddRange(itemCodeBytes);
-            msg.AddRange(parameters);
+            List<byte> msg = [.. headerBytes, .. itemCodeBytes, .. parameters];
 
-            return msg.ToArray();
+            return [.. msg];
         }
 
         public static bool TranslateMessage(byte[] msg, out MsgTypes type, out ControlItemCodes itemCode, out ushort sequenceNumber, out byte[] body)
@@ -57,16 +54,16 @@
             itemCode = ControlItemCodes.None;
             sequenceNumber = 0;
             bool success = true;
-            var msgEnumarable = msg as IEnumerable<byte>;
+            var msgEnumerable = msg as IEnumerable<byte>;
 
-            TranslateHeader(msgEnumarable.Take(_msgHeaderLength).ToArray(), out type, out int msgLength);
-            msgEnumarable = msgEnumarable.Skip(_msgHeaderLength);
+            TranslateHeader([.. msgEnumerable.Take(_msgHeaderLength)], out type, out int msgLength);
+            msgEnumerable = msgEnumerable.Skip(_msgHeaderLength);
             msgLength -= _msgHeaderLength;
 
             if (type < MsgTypes.DataItem0) // get item code
             {
-                var value = BitConverter.ToUInt16(msgEnumarable.Take(_msgControlItemLength).ToArray());
-                msgEnumarable = msgEnumarable.Skip(_msgControlItemLength);
+                var value = BitConverter.ToUInt16(msgEnumerable.Take(_msgControlItemLength).ToArray());
+                msgEnumerable = msgEnumerable.Skip(_msgControlItemLength);
                 msgLength -= _msgControlItemLength;
 
                 if (Enum.IsDefined(typeof(ControlItemCodes), value))
@@ -80,12 +77,12 @@
             }
             else // get sequenceNumber
             {
-                sequenceNumber = BitConverter.ToUInt16(msgEnumarable.Take(_msgSequenceNumberLength).ToArray());
-                msgEnumarable = msgEnumarable.Skip(_msgSequenceNumberLength);
+                sequenceNumber = BitConverter.ToUInt16(msgEnumerable.Take(_msgSequenceNumberLength).ToArray());
+                msgEnumerable = msgEnumerable.Skip(_msgSequenceNumberLength);
                 msgLength -= _msgSequenceNumberLength;
             }
 
-            body = msgEnumarable.ToArray();
+            body = [.. msgEnumerable];
 
             success &= body.Length == msgLength;
 

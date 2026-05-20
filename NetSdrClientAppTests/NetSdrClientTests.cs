@@ -48,10 +48,10 @@ public class NetSdrClientTests
     }
 
     [Test]
-    public async Task DisconnectWithNoConnectionTest()
+    public void DisconnectWithNoConnectionTest()
     {
         //act
-        _client.Disconect();
+        _client.Disconnect();
 
         //assert
         //No exception thrown
@@ -65,7 +65,7 @@ public class NetSdrClientTests
         await ConnectAsyncTest();
 
         //act
-        _client.Disconect();
+        _client.Disconnect();
 
         //assert
         //No exception thrown

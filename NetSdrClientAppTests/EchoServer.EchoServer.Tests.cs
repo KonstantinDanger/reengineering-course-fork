@@ -53,7 +53,7 @@ public class EchoServerTests
         byte[] buffer = new byte[1024];
 
         // Act
-        await stream.WriteAsync(message, 0, message.Length);
+        await stream.WriteAsync(message);
 
         int bytesRead = await stream.ReadAsync(buffer);
 
@@ -111,7 +111,7 @@ public class EchoServerTests
                 string text = $"client-{i}";
                 byte[] message = Encoding.UTF8.GetBytes(text);
 
-                await stream.WriteAsync(message, 0, message.Length);
+                await stream.WriteAsync(message);
 
                 byte[] buffer = new byte[1024];
 
@@ -282,9 +282,12 @@ public class EchoServerTests
         cts.Cancel();
         await runTask;
 
-        // Assert
-        Assert.That(runTask.IsCompletedSuccessfully, Is.True);
-        Assert.That(runTask.IsFaulted, Is.False);
+        Assert.Multiple(() =>
+        {
+            // Assert
+            Assert.That(runTask.IsCompletedSuccessfully, Is.True);
+            Assert.That(runTask.IsFaulted, Is.False);
+        });
     }
 
 
