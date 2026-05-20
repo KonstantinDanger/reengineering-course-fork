@@ -95,7 +95,7 @@ namespace NetSdrClientApp.Networking
                     Console.WriteLine($"Starting listening for incoming messages.");
 
                     if (_cts == null)
-                        throw new ArgumentNullException(nameof(_cts), "The token was null");
+                        throw new InvalidOperationException("The operation cannot be performed because the CancellationTokenSource has not been initialized.");
 
                     while (!_cts.Token.IsCancellationRequested)
                     {

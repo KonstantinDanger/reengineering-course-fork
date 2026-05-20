@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace NetSdrClientApp
 {
-    public class Program
+    public static class Program
     {
         [ExcludeFromCodeCoverage]
         public static async Task Main(string[] args)
