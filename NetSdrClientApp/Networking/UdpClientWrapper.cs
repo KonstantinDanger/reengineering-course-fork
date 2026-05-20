@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
@@ -56,13 +55,13 @@ namespace NetSdrClientApp.Networking
             }
         }
 
-        [ExcludeFromCodeCoverage]
         public void Exit() => StopListening();
 
         public override int GetHashCode()
         {
-            var payload = $"{nameof(UdpClientWrapper)}|{_localEndPoint.Address}|{_localEndPoint.Port}";
-            var hash = MD5.HashData(Encoding.UTF8.GetBytes(payload));
+            string payload = $"{nameof(UdpClientWrapper)}|{_localEndPoint.Address}|{_localEndPoint.Port}";
+            byte[] inputBytes = Encoding.UTF8.GetBytes(payload);
+            byte[] hash = SHA512.HashData(inputBytes);
 
             return BitConverter.ToInt32(hash, 0);
         }

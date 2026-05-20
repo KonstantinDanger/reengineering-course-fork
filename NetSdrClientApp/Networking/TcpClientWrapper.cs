@@ -95,7 +95,7 @@ namespace NetSdrClientApp.Networking
                     Console.WriteLine($"Starting listening for incoming messages.");
 
                     if (_cts == null)
-                        throw new NullReferenceException("The token was null");
+                        throw new ArgumentNullException("The token was null");
 
                     while (!_cts.Token.IsCancellationRequested)
                     {

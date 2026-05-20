@@ -24,14 +24,17 @@ namespace NetSdrClientAppTests
             var actualLength = num - ((int)actualType << 13);
             var actualCode = BitConverter.ToInt16(codeBytes.ToArray());
 
-            //Assert
-            Assert.That(headerBytes.Count(), Is.EqualTo(2));
-            Assert.That(msg.Length, Is.EqualTo(actualLength));
-            Assert.That(type, Is.EqualTo(actualType));
+            Assert.Multiple(() =>
+            {
+                //Assert
+                Assert.That(headerBytes.Count(), Is.EqualTo(2));
+                Assert.That(msg, Has.Length.EqualTo(actualLength));
+                Assert.That(type, Is.EqualTo(actualType));
 
-            Assert.That(actualCode, Is.EqualTo((short)code));
+                Assert.That(actualCode, Is.EqualTo((short)code));
 
-            Assert.That(parametersBytes.Count(), Is.EqualTo(parametersLength));
+                Assert.That(parametersBytes.Count(), Is.EqualTo(parametersLength));
+            });
         }
 
         [Test]
@@ -55,7 +58,7 @@ namespace NetSdrClientAppTests
             {
                 //Assert
                 Assert.That(headerBytes.Count(), Is.EqualTo(2));
-                Assert.That(msg.Length, Is.EqualTo(actualLength));
+                Assert.That(msg, Has.Length.EqualTo(actualLength));
                 Assert.That(type, Is.EqualTo(actualType));
 
                 Assert.That(parametersBytes.Count(), Is.EqualTo(parametersLength));
@@ -70,9 +73,9 @@ namespace NetSdrClientAppTests
             var code = NetSdrMessageHelper.ControlItemCodes.ReceiverState;
 
             // Act
-            byte[] msg = NetSdrMessageHelper.GetControlItemMessage(type, code, Array.Empty<byte>());
+            byte[] msg = NetSdrMessageHelper.GetControlItemMessage(type, code, []);
 
-            // Assert: 2 header bytes + 2 code bytes = 4
+            // Assert
             Assert.That(msg, Has.Length.EqualTo(4));
         }
 
@@ -82,10 +85,10 @@ namespace NetSdrClientAppTests
             // Arrange
             var type = NetSdrMessageHelper.MsgTypes.SetControlItem;
             var code = NetSdrMessageHelper.ControlItemCodes.ReceiverState;
-            // header(2) + code(2) + params must exceed 8191
+
             var tooLarge = new byte[8191];
 
-            // Act / Assert
+            // Act + Assert
             Assert.Throws<ArgumentException>(
                 () => NetSdrMessageHelper.GetControlItemMessage(type, code, tooLarge));
         }
@@ -93,9 +96,7 @@ namespace NetSdrClientAppTests
         [Test]
         public void GetDataItemMessage_MaxDataItemLength_EncodesZeroInHeader()
         {
-            // Arrange — DataItem edge case: total length == 8194 → header length field must be 0
             var type = NetSdrMessageHelper.MsgTypes.DataItem0;
-            // 8194 - 2 header bytes = 8192 parameter bytes
             var parameters = new byte[8192];
 
             // Act
@@ -104,9 +105,9 @@ namespace NetSdrClientAppTests
             var raw = BitConverter.ToUInt16(msg.Take(2).ToArray());
             var encodedLength = raw - ((int)type << 13);
 
+            // Assert
             Assert.Multiple(() =>
             {
-                // Assert: the special-case length is encoded as 0
                 Assert.That(encodedLength, Is.EqualTo(0));
                 Assert.That(msg, Has.Length.EqualTo(8194));
             });
@@ -122,7 +123,7 @@ namespace NetSdrClientAppTests
             // Act
             byte[] msg = NetSdrMessageHelper.GetDataItemMessage(type, parameters);
 
-            // Assert: total = 2 header + 3 params (no 2-byte code in between)
+            // Assert
             Assert.That(msg, Has.Length.EqualTo(5));
             Assert.That(msg.Skip(2).ToArray(), Is.EqualTo(parameters));
         }
@@ -135,18 +136,17 @@ namespace NetSdrClientAppTests
             ushort sequenceNumber = 42;
             var payload = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF };
 
-            // Build manually: header + sequence number + payload
             byte[] msg = NetSdrMessageHelper.GetDataItemMessage(
                 type,
-                BitConverter.GetBytes(sequenceNumber).Concat(payload).ToArray());
+                [.. BitConverter.GetBytes(sequenceNumber), .. payload]);
 
             // Act
             bool success = NetSdrMessageHelper.TranslateMessage(
                 msg, out var actualType, out _, out var actualSeq, out var body);
 
+            // Assert
             Assert.Multiple(() =>
             {
-                // Assert
                 Assert.That(success, Is.True);
                 Assert.That(actualType, Is.EqualTo(type));
                 Assert.That(actualSeq, Is.EqualTo(sequenceNumber));
@@ -157,7 +157,7 @@ namespace NetSdrClientAppTests
         [Test]
         public void GetSamples_16Bit_ExtractsCorrectValues()
         {
-            // Arrange: two 16-bit little-endian samples: 256 (0x00, 0x01) and 512 (0x00, 0x02)
+            // Arrange
             var body = new byte[] { 0x00, 0x01, 0x00, 0x02 };
 
             // Act
@@ -178,7 +178,7 @@ namespace NetSdrClientAppTests
             // Arrange
             var body = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05 };
 
-            // Act / Assert: 40-bit sample size (5 bytes) exceeds the 4-byte cap
+            // Act + Assert
             Assert.Throws<ArgumentOutOfRangeException>(
                 () => NetSdrMessageHelper.GetSamples(40, body).ToList());
         }
