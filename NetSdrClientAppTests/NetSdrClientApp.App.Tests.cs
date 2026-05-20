@@ -18,6 +18,10 @@ public class AppTests
         => Assert.DoesNotThrow(App.ShowCommands);
 
     [Test]
+    public void Greet_ThrowsNoExceptions()
+        => Assert.DoesNotThrow(App.Greet);
+
+    [Test]
     public async Task PerformCommand_ReceiveCorrectKey_ReturnTrue()
     {
         App app = CreateApp();
@@ -48,5 +52,38 @@ public class AppTests
         bool result = await app.PerformCommand(app.NetSdr, key);
 
         Assert.That(result, Is.False);
+    }
+
+    [Test]
+    public async Task PerformCommand_ReceiveDKey_ReturnTrue()
+    {
+        App app = CreateApp();
+        ConsoleKey key = ConsoleKey.D;
+
+        bool result = await app.PerformCommand(app.NetSdr, key);
+
+        Assert.That(result, Is.True);
+    }
+
+    [Test]
+    public async Task PerformCommand_ReceiveFKey_ReturnTrue()
+    {
+        App app = CreateApp();
+        ConsoleKey key = ConsoleKey.F;
+
+        bool result = await app.PerformCommand(app.NetSdr, key);
+
+        Assert.That(result, Is.True);
+    }
+
+    [Test]
+    public async Task PerformCommand_ReceiveSKey_ReturnTrue()
+    {
+        App app = CreateApp();
+        ConsoleKey key = ConsoleKey.S;
+
+        bool result = await app.PerformCommand(app.NetSdr, key);
+
+        Assert.That(result, Is.True);
     }
 }

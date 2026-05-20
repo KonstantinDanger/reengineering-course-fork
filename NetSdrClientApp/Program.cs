@@ -1,9 +1,11 @@
 ﻿using NetSdrClientApp.Networking;
+using System.Diagnostics.CodeAnalysis;
 
 namespace NetSdrClientApp
 {
     public class Program
     {
+        [ExcludeFromCodeCoverage]
         public static async Task Main(string[] args)
         {
             var tcpClient = new TcpClientWrapper("127.0.0.1", 5000);

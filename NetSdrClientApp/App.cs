@@ -1,4 +1,6 @@
-﻿namespace NetSdrClientApp
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace NetSdrClientApp
 {
     public class App
     {
@@ -21,10 +23,10 @@
         public App(NetSdrClient netSdrClient)
             => NetSdr = netSdrClient;
 
+        [ExcludeFromCodeCoverage]
         public async Task Start()
         {
-            Console.WriteLine("Program has started");
-
+            Greet();
             ShowCommands();
 
             while (true)
@@ -48,6 +50,8 @@
 
             return true;
         }
+
+        public static void Greet() => Console.WriteLine("Program has started");
 
         public static void ShowCommands()
         {
